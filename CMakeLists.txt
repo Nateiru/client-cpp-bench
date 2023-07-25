@@ -18,4 +18,16 @@ project (cleint_bench VERSION 0.1 LANGUAGES CXX)
 # generate complie_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# set project root directory
+set(CLIENT_BENCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(CLIENT_BENCH_THIRD_PARTY_INCLUDE_DIR 
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/json/include
+        )
+
+include_directories(
+        ${CLIENT_BENCH_THIRD_PARTY_INCLUDE_DIR}
+        )
+
 add_subdirectory(contrib)

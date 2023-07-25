@@ -13,3 +13,4 @@
 # limitations under the License.
 
 add_subdirectory(greptimedb-client-cpp)
+add_subdirectory(json)

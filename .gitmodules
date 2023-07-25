@@ -1,3 +1,6 @@
 [submodule "contrib/greptimedb-client-cpp"]
 	path = contrib/greptimedb-client-cpp
 	url = git@github.com:GreptimeTeam/greptimedb-client-cpp.git
+[submodule "contrib/json"]
+	path = contrib/json
+	url = git@github.com:nlohmann/json.git
