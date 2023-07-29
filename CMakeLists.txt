@@ -24,10 +24,21 @@ set(CLIENT_BENCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLIENT_BENCH_THIRD_PARTY_INCLUDE_DIR 
         ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp
         ${CLIENT_BENCH_ROOT_DIR}/contrib/json/include
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/cpp-httplib
+        )
+
+set(USE_GREPTIME_CLIENT_THIRD_PARTY_INCLUDE_DIR 
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/greptime-proto/c++
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/include
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/third_party/abseil-cpp
+        ${CLIENT_BENCH_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/third_party/protobuf/src
         )
 
 include_directories(
         ${CLIENT_BENCH_THIRD_PARTY_INCLUDE_DIR}
+        ${USE_GREPTIME_CLIENT_THIRD_PARTY_INCLUDE_DIR}
+        ${CLIENT_BENCH_ROOT_DIR}
         )
 
 add_subdirectory(contrib)
+add_subdirectory(src)
