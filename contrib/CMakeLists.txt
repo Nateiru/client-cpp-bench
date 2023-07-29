@@ -14,3 +14,4 @@
 
 add_subdirectory(greptimedb-client-cpp)
 add_subdirectory(json)
+add_subdirectory(cpp-httplib)
