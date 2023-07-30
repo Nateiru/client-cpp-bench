@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(bench main.cpp)
+add_executable(bench httpsql.cpp core.cpp main.cpp)
 
 # greptime lib
 target_link_libraries(bench
