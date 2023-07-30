@@ -157,6 +157,9 @@ struct InsertEntry {
     }
 
     void add_point(TableName table_name, FieldName field_name, FieldVal field_val) {
+        if (tables.find(table_name) == tables.end()) {
+            tables.emplace(table_name, std::unordered_map<FieldName, FieldVal>());
+        }
         auto &fields = tables[table_name];
         fields.emplace(field_name, field_val);
     }
@@ -185,6 +188,7 @@ struct LineWriter {
                                   std::vector<Timestamp>, 
                                   uint32_t>
                                   > mp;
+
     void add_row(TableName table_name, Timestamp ts, std::unordered_map<FieldName, FieldVal> fields) {
         
         auto &[field_map, ts_vec, cur_row] = mp[table_name];
@@ -213,11 +217,12 @@ struct LineWriter {
                     val_vec.emplace_back(0.0);
                 }
             });
-
         }
     }
+
     auto build() -> std::vector<InsertRequest> {
         std::vector<InsertRequest> insert_vec;
+        insert_vec.reserve(mp.size());
 
         for (auto &[table_name, t3] : mp) {
             InsertRequest insert_request;
@@ -278,7 +283,7 @@ struct Core {
 std::queue<InsertEntry> buffer;
 std::mutex mtx;
 std::condition_variable cv;
-const int BUFFER_SIZE = 10000;
+const int BUFFER_SIZE = 100000;
 bool is_producer_done = false;
 
 
@@ -513,16 +518,19 @@ int main(int argc, const char *argv[]) {
     auto can_id_map = parse_can_id_signal_file(config.can_id_map_path());
     auto index = can_id_map.build_index();
     // auto sqls = can_id_map.createTableSqls(512);
-    Core core{config, can_id_map, index};
 
     /// =========== 2.http创建表 ===========
     // prepare(core);
 
     /// =========== 3.bench测试 ==========
-    if (argc == 1) {
+    if (argc == 2) {
+        std::string csv_data_path = std::string(argv[1]);
+        auto config = BenchConfig(csv_data_path); 
+        Core core{config, can_id_map, index};
         bench(core); 
     }
     else {
+        Core core{config, can_id_map, index};
         truncate(core);
     }
     return 0;
