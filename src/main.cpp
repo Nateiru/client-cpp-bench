@@ -1,5 +1,6 @@
 #include <cassert>
 #include <condition_variable>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -55,9 +56,9 @@ void producer(const Core& core) {
     Timestamp time_flag = -1;
     // 第一行忽略
     std::getline(file, line);
-    int cnt = 0;
+    uint32_t cnt = 0;
     InsertEntry insert_entry;
-    while(std::getline(file, line)) {
+    while(std::getline(file, line) && cnt < 2000000) {
         // std::cout << line << std::endl;
         auto pos = line.find(',');
         Timestamp ts = std::atol(line.substr(0, pos).c_str());
@@ -69,16 +70,6 @@ void producer(const Core& core) {
     
         pos = line.find(',');
         FieldVal val = atof(line.substr(0, pos).c_str());
-
-        // std::stringstream ss(line);
-        // std::string item;
-        // std::getline(ss, item, ',');
-        // Timestamp ts = std::atol(item.c_str());
-        // std::getline(ss, item, ',');
-        // FieldName signal = item;
-        // std::getline(ss, item, ',');
-        // FieldVal val = atof(item.c_str());
-        // std::cout << ts << "," << signal << "," << val << std::endl;
         
         if (core.index->find(signal) == core.index->end()) {
             continue;
@@ -91,6 +82,13 @@ void producer(const Core& core) {
         }
         else if (time_flag != ts) {
             // TODO: processor
+            // uint32_t points = insert_entry.get_point_num();
+            // if (points == 0) points++;
+            // cnt += points;
+            // if (cnt > 20000000) {
+            //     break;
+            // }
+
             {
                 std::unique_lock<std::mutex> lock(mtx);
                 cv.wait(lock, []{
@@ -99,6 +97,7 @@ void producer(const Core& core) {
                 buffer.push(insert_entry);
                 cv.notify_one();
             }
+            
             insert_entry = InsertEntry(ts);
             time_flag = ts;
         }
@@ -183,103 +182,6 @@ void consumer(const Core& core) {
         std::cout << status.error_message() << std::endl;
         std::cout << status.error_details() << std::endl;
     }
-}
-
-// 串行调试bug
-void serial(const Core &core) {
-    std::cout << "serial: " << std::endl;
-    std::ifstream file(core.config->csv_data_path());
-    std::string line;
-    Timestamp time_flag = -1;
-    // 第一行忽略
-    std::getline(file, line);
-    int cnt = 0;
-    InsertEntry insert_entry;
-    while(std::getline(file, line)) {
-        auto pos = line.find(',');
-        Timestamp ts = std::atol(line.substr(0, pos).c_str());
-        line.erase(0, pos + 1);
-
-        pos = line.find(',');
-        FieldName signal = line.substr(0, pos);
-        line.erase(0, pos + 1);
-    
-        pos = line.find(',');
-        FieldVal val = atof(line.substr(0, pos).c_str());
-        // std::cout << ts << ' '  << signal << ' ' << val << std::endl;
-        
-        if (core.index->find(signal) == core.index->end()) {
-            continue;
-        }
-        if (time_flag == -1) {
-            assert(ts >= 0);
-            time_flag = ts;
-            insert_entry.set_ts(ts);
-        }
-        else if (time_flag != ts) {
-            buffer.push(insert_entry);
-            insert_entry = InsertEntry(ts);
-            time_flag = ts;
-        }
-        auto can_id = core.index->at(signal);
-        auto table_name = "table_" + can_id;
-        insert_entry.add_point(table_name, signal, val);
-    }
-    // 最后一组 timestamp
-    if (insert_entry.ts != -1 && insert_entry.get_point_num() > 0) {
-        buffer.push(insert_entry);
-    }
-
-
-    // client rpc
-    auto channel = grpc::CreateChannel("localhost:4001", grpc::InsecureChannelCredentials());
-    greptime::Database database("public", channel);
-
-    InsertBatch cache;
-    cache.reserve(core.config->batch_number());
-    while (!buffer.empty() || cache.size()) {
-
-        if (!buffer.empty()) {
-            auto insert_entry = buffer.front();
-            buffer.pop(); 
-            cache.emplace_back(insert_entry);
-        }
-
-        if (!buffer.empty() && cache.size() < core.config->batch_number()) {
-            continue;
-        }
-
-        LineWriter line_writer;
-        for (auto &insert_entry : cache) {
-            auto ts = insert_entry.ts;
-            for (auto &[table_name, fields] : insert_entry.tables) {
-                line_writer.add_row(table_name, ts, fields);
-            }
-        }
-        cache.clear();
-        auto insert_vec = line_writer.build();
-        auto insert_requests = to_insert_requests(insert_vec);
-        database.Insert(std::move(insert_requests));
-    }
-
-    database.InsertsDone();
-
-    grpc::Status status = database.Finish();
-
-    /** =========================== 4.handle return response =========================== **/
-    if (status.ok()) {
-        std::cout << "success!" << std::endl;
-        auto response = database.GetResponse();
-
-        std::cout << "notice: [";
-        std::cout << response.affected_rows().value() << "] ";
-        std::cout << "rows of data are successfully inserted into the public database"<< std::endl;
-    } else {
-        std::cout << "fail!" << std::endl;
-        std::cout << status.error_message() << std::endl;
-        std::cout << status.error_details() << std::endl;
-    }
-
 }
 
 void bench(const Core &core) {
