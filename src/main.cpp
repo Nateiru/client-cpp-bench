@@ -43,7 +43,7 @@ CanIdToSignalMap parse_can_id_signal_file(const std::string &file_path) {
     return {map};
 }
 
-// 单生产者-单消费者
+// 生产者-消费者
 std::queue<InsertEntry> buffer;
 std::mutex mtx;
 std::condition_variable cv;
@@ -57,9 +57,10 @@ void producer(const Core& core) {
     // 第一行忽略
     std::getline(file, line);
     uint32_t cnt = 0;
+    uint32_t insert_point_number = core.config->insert_point_number();
     InsertEntry insert_entry;
     while(std::getline(file, line) && cnt < 2000000) {
-        // std::cout << line << std::endl;
+
         auto pos = line.find(',');
         Timestamp ts = std::atol(line.substr(0, pos).c_str());
         line.erase(0, pos + 1);
@@ -82,12 +83,12 @@ void producer(const Core& core) {
         }
         else if (time_flag != ts) {
             // TODO: processor
-            // uint32_t points = insert_entry.get_point_num();
-            // if (points == 0) points++;
-            // cnt += points;
-            // if (cnt > 20000000) {
-            //     break;
-            // }
+            uint32_t points = insert_entry.get_point_num();
+            if (points == 0) points++;
+            cnt += points;
+            if (cnt > insert_point_number) {
+                break;
+            }
 
             {
                 std::unique_lock<std::mutex> lock(mtx);
@@ -169,7 +170,6 @@ void consumer(const Core& core) {
 
     grpc::Status status = database.Finish();
 
-    /** =========================== 4.handle return response =========================== **/
     if (status.ok()) {
         std::cout << "success!" << std::endl;
         auto response = database.GetResponse();
@@ -189,14 +189,10 @@ void bench(const Core &core) {
     std::cout << "bench start" << std::endl;
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    /// =============== 生产者 消费者 =============== 
     std::thread procucer_thread(producer, core);
     std::thread consumer_thread(consumer, core);
     procucer_thread.join();
     consumer_thread.join(); 
-    /// =============== 生产者 消费者 =============== 
-
-    // serial(core);
 
     auto end_time = std::chrono::high_resolution_clock::now();
 

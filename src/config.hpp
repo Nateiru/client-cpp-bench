@@ -4,9 +4,9 @@
 struct Settings {
     std::string can_id_map_path = "/home/zhuziyi/Projects/client-cpp-bench/data/canIdMap.txt";
     std::string csv_data_path = "/home/zhuziyi/Projects/client-cpp-bench/data/a.csv";
-    uint32_t insert_point_number = 20000000;
-    uint32_t max_insert_point_per_sec = 300000;
-    uint32_t batch_number = 1024; 
+    uint32_t insert_point_number = 2000000;
+    uint32_t max_insert_point_per_sec = 300000000;
+    uint32_t batch_number = 100; 
     uint32_t write_buffer_size = 512;
     std::string write_http_endpoint = "127.0.0.1:4000";
     Settings() = default;
