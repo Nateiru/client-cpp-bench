@@ -1,5 +1,8 @@
 #include "core.h"
+#include <cassert>
 #include <src/config.hpp>
+#include <tuple>
+#include <vector>
 
 SignalToCanId CanIdToSignalMap::build_index() {
     SignalToCanId signal_to_can_id_map;
@@ -79,13 +82,17 @@ uint32_t InsertEntry::get_point_num() {
 
 
 void LineWriter::add_row(TableName table_name, Timestamp ts, const std::unordered_map<FieldName, FieldVal> &fields) {
-    
+    if (mp.find(table_name) == mp.end()) {
+        mp.emplace(table_name, std::make_tuple(std::unordered_map<FieldName, std::vector<FieldVal>>(),
+                                               std::vector<Timestamp>(),
+                                               0));
+    }
     auto &[field_map, ts_vec, cur_row] = mp[table_name];
     // 如果前面 insert 的没有对应对 field
     // 那么说明该 field 前面都是 null
     for(const auto &[name, val] : fields) {
         if (field_map.find(name) == field_map.end()) {
-            field_map.emplace(name, std::vector<FieldVal>(0.0, cur_row));
+            field_map.emplace(name, std::vector<FieldVal>(cur_row, 0.0));
         } else {
             assert(field_map[name].size() == cur_row);
         }           
@@ -93,42 +100,16 @@ void LineWriter::add_row(TableName table_name, Timestamp ts, const std::unordere
     }
     cur_row += 1;
     ts_vec.emplace_back(ts);
-    for(const auto &[name, val_vec] : field_map) {
-        bool cond = val_vec.size() == cur_row || val_vec.size() + 1 == cur_row;
-        if (!cond) {
-            std::cout<< name << ": " << val_vec.size() << " - " <<cur_row << std::endl;
-        }
-    }
+
     size_t row_count = cur_row;
-    std::for_each(field_map.begin(), field_map.end(), [cur_row = row_count](auto& field) {
+    std::for_each(field_map.begin(), field_map.end(), [&, cur_row = row_count](auto& field) {
         auto& val_vec = field.second;
         if (val_vec.size() < cur_row) {
-            bool cond = (val_vec.size() + 1 == cur_row);
-            if (!cond) {
-                std::cout << val_vec.size() << " != " << cur_row << std::endl;
-                assert(cond);
-            }
+            assert((val_vec.size() + 1 == cur_row));
             val_vec.emplace_back(0.0);
         }
     });
 } 
-
-void LineWriter::commit() {
-    // 可能新增一个 field
-    // // 其他每行的也需要增加 field 值是null
-    // for (auto &[table_name, table_map] : mp) {
-    //     auto &field_map = std::get<0>(table_map);
-    //     auto &cur_row = std::get<2>(table_map);
-        
-    //     std::for_each(field_map.begin(), field_map.end(), [cur_row](auto& fields) {
-    //         auto& val_vec = fields.second;
-    //         if (val_vec.size() < cur_row) {
-    //             // assert(val_vec.size() + 1 == cur_row);
-    //             val_vec.emplace_back(0.0);
-    //         }
-    //     });
-    // }
-}
 
 auto LineWriter::build() -> std::vector<InsertRequest> {
     std::vector<InsertRequest> insert_vec;

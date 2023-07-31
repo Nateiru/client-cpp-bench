@@ -16,6 +16,8 @@ using Sql = std::string;
 struct CanIdToSignalMap {
     std::unordered_map<CanId, SignalNames> inner;
 
+    CanIdToSignalMap() = default;
+
     SignalToCanId build_index();
 
     std::vector<Sql> createTableSqls(uint32_t buffer_size);
@@ -34,10 +36,16 @@ struct InsertEntry {
     std::unordered_map<TableName, std::unordered_map<FieldName, FieldVal>> tables;
 
     InsertEntry():ts(-1) {
+        for(auto&[_, fields] : tables) {
+            fields.clear();
+        }
         tables.clear();
     }
 
     InsertEntry(Timestamp ts_):ts(ts_) {
+        for(auto&[_, fields] : tables) {
+            fields.clear();
+        }
         tables.clear();
     }
 
