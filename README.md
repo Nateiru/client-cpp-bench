@@ -22,5 +22,5 @@ make -j$(nproc)
 cd client-cpp-bench/build
 
 # 参数是配置文件的绝对路径
-./src/ssbench /home/zhuziyi/Projects/client-cpp-bench/config.toml
+./src/bench /home/zhuziyi/Projects/client-cpp-bench/config.toml
 ```
