@@ -65,12 +65,13 @@ std::vector<Sql> CanIdToSignalMap::clearTableSqls(uint32_t buffer_size) {
 }
 
 void InsertEntry::add_point(TableName table_name, FieldName field_name, FieldVal field_val) {
-    if (tables.find(table_name) == tables.end()) {
-        tables.emplace(table_name, std::unordered_map<FieldName, FieldVal>());
-    }
-    auto &fields = tables[table_name];
-    fields[field_name] = field_val;
+    // if (tables.find(table_name) == tables.end()) {
+    //     tables.emplace(table_name, std::unordered_map<FieldName, FieldVal>());
+    // }
+    // auto &fields = tables[table_name];
+    // fields[field_name] = field_val;
     // fields.emplace(field_name, field_val);
+    tables[table_name].emplace(field_name, field_val);
 }
 
 uint32_t InsertEntry::get_point_num() {
@@ -93,25 +94,20 @@ void LineWriter::add_row(TableName table_name, Timestamp ts, const std::unordere
     for(const auto &[name, val] : fields) {
         auto it = field_map.find(name);
         if (it == field_map.end()) {
-            std::vector<FieldVal> field_val(cur_row, 0.0);
-            field_val.emplace_back(val);
-            field_map.emplace(name, field_val);
-        } 
-        else {
-            it->second.emplace_back(val);
+            // 使用emplace_hint插入元素
+            it = field_map.emplace_hint(field_map.end(), name, std::vector<FieldVal>(cur_row, 0.0));
         }
+        it->second.emplace_back(val);
     }
     cur_row += 1;
     ts_vec.emplace_back(ts);
 
-    size_t row_count = cur_row;
-    std::for_each(field_map.begin(), field_map.end(), [&, cur_row = row_count](auto& field) {
+    for (auto& field : field_map) {
         auto& val_vec = field.second;
         if (val_vec.size() < cur_row) {
-            assert((val_vec.size() + 1 == cur_row));
-            val_vec.emplace_back(0.0);
-        }
-    });
+            val_vec.resize(cur_row, 0.0);
+       }
+    }
 } 
 
 auto LineWriter::build() -> std::vector<InsertRequest> {
@@ -123,7 +119,6 @@ auto LineWriter::build() -> std::vector<InsertRequest> {
         auto &[field_map, ts_vec, row_count] = t3;
         insert_request.set_table_name(table_name);
         insert_request.set_row_count(row_count);
-        assert(row_count == ts_vec.size());
         // timestamp
         {
             column.Clear();
@@ -138,7 +133,6 @@ auto LineWriter::build() -> std::vector<InsertRequest> {
         }
         // field
         for (const auto&[field_name, field_vals] : field_map) {
-            assert(row_count == field_vals.size());
             column.Clear();
             column.set_column_name(field_name);
             column.set_semantic_type(Column_SemanticType::Column_SemanticType_FIELD);

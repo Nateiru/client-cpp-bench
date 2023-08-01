@@ -138,7 +138,7 @@ void consumer(const Core& core) {
             if (!buffer.empty()) {
                 auto insert_entry = buffer.front();
                 buffer.pop(); 
-                cache.emplace_back(insert_entry);
+                cache.emplace_back(std::move(insert_entry));
                 cv.notify_one();
             }
             else {
