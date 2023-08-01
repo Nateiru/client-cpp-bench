@@ -127,6 +127,7 @@ void consumer(const Core& core) {
     greptime::Database database("public", channel);
 
     InsertBatch cache;
+    InsertRequests insert_requests;
     cache.reserve(core.config->batch_number());
     while (true) {
         {
@@ -162,7 +163,7 @@ void consumer(const Core& core) {
         }
         cache.clear();
         auto insert_vec = line_writer.build();
-        auto insert_requests = to_insert_requests(insert_vec);
+        insert_requests = to_insert_requests(insert_vec);
         database.Insert(insert_requests);
     }
 
