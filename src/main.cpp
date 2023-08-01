@@ -221,15 +221,12 @@ void bench(const Core &core) {
 }
 
 int main(int argc, const char *argv[]) {
-    /// =========== 1.构造配置变量 =========== 
-    auto config = BenchConfig();
-    auto can_id_map = parse_can_id_signal_file(config.can_id_map_path());
-    auto index = can_id_map.build_index();
-
-
+    
     if (argc == 2) {
-        std::string csv_data_path = std::string(argv[1]);
-        auto config = BenchConfig(csv_data_path); 
+        std::string config_file_path = std::string(argv[1]);
+        auto config = BenchConfig(config_file_path); 
+        auto can_id_map = parse_can_id_signal_file(config.can_id_map_path());
+        auto index = can_id_map.build_index();
         Core core{config, can_id_map, index};
 
     /// =========== 2.http创建表 ===========
@@ -237,10 +234,6 @@ int main(int argc, const char *argv[]) {
 
     /// =========== 3.bench测试 ==========
         bench(core); 
-    }
-    else {
-        Core core{config, can_id_map, index};
-        truncate(core);
     }
     return 0;
 }
