@@ -3,8 +3,8 @@
 
 struct Settings {
     std::string can_id_map_path = "/home/zhuziyi/Projects/client-cpp-bench/data/canIdMap.txt";
-    std::string csv_data_path = "/home/zhuziyi/Projects/client-cpp-bench/data/a.csv";
-    uint32_t insert_point_number = 2000000;
+    std::string csv_data_path = "/home/zhuziyi/Projects/client-cpp-bench/data/data.csv";
+    uint64_t insert_point_number = 2000000;
     uint32_t max_insert_point_per_sec = 300000000;
     uint32_t batch_number = 100; 
     uint32_t write_buffer_size = 512;
@@ -34,7 +34,7 @@ struct BenchConfig {
         return settings.max_insert_point_per_sec;
     }
 
-    auto batch_number() -> uint32_t {
+    auto batch_number() -> uint64_t {
         return settings.batch_number;
     }
     

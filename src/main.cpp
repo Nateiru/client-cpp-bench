@@ -21,10 +21,10 @@
 
 using json = nlohmann::json;
 
-auto to_insert_requests(const std::vector<InsertRequest>& vec_insert_requests) -> InsertRequests {
+auto to_insert_requests(std::vector<InsertRequest>& vec_insert_requests) -> InsertRequests {
     InsertRequests insert_requests;
-    for (const auto &insert_request : vec_insert_requests) {
-        insert_requests.add_inserts()->CopyFrom(insert_request);
+    for (auto &insert_request : vec_insert_requests) {
+        insert_requests.add_inserts()->Swap(&insert_request);
     }
     return std::move(insert_requests);
 }
@@ -56,10 +56,10 @@ void producer(const Core& core) {
     Timestamp time_flag = -1;
     // 第一行忽略
     std::getline(file, line);
-    uint32_t cnt = 0;
-    uint32_t insert_point_number = core.config->insert_point_number();
+    uint64_t cnt = 0;
+    uint64_t insert_point_number = core.config->insert_point_number();
     InsertEntry insert_entry;
-    while(std::getline(file, line) && cnt < 2000000) {
+    while(std::getline(file, line)) {
 
         auto pos = line.find(',');
         Timestamp ts = std::atol(line.substr(0, pos).c_str());
@@ -83,7 +83,7 @@ void producer(const Core& core) {
         }
         else if (time_flag != ts) {
             // TODO: processor
-            uint32_t points = insert_entry.get_point_num();
+            uint64_t points = insert_entry.get_point_num();
             if (points == 0) points++;
             cnt += points;
             if (cnt > insert_point_number) {
@@ -163,7 +163,7 @@ void consumer(const Core& core) {
         cache.clear();
         auto insert_vec = line_writer.build();
         auto insert_requests = to_insert_requests(insert_vec);
-        database.Insert(std::move(insert_requests));
+        database.Insert(insert_requests);
     }
 
     database.InsertsDone();
@@ -190,10 +190,21 @@ void bench(const Core &core) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     std::thread procucer_thread(producer, core);
-    std::thread consumer_thread(consumer, core);
-    procucer_thread.join();
-    consumer_thread.join(); 
+    std::vector<std::thread> consumer_threads;
 
+    #define CONSUMER_NUM 1
+    consumer_threads.reserve(CONSUMER_NUM);
+
+    for (int i = 0; i < CONSUMER_NUM; i++) {
+        consumer_threads.emplace_back(std::thread(consumer, core));
+    }
+
+    procucer_thread.join();
+
+    for (int i = 0; i < CONSUMER_NUM; i++) {
+        consumer_threads[i].join();
+    }
+    
     auto end_time = std::chrono::high_resolution_clock::now();
 
     auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);

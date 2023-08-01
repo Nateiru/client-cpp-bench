@@ -91,12 +91,15 @@ void LineWriter::add_row(TableName table_name, Timestamp ts, const std::unordere
     // 如果前面 insert 的没有对应对 field
     // 那么说明该 field 前面都是 null
     for(const auto &[name, val] : fields) {
-        if (field_map.find(name) == field_map.end()) {
-            field_map.emplace(name, std::vector<FieldVal>(cur_row, 0.0));
-        } else {
-            assert(field_map[name].size() == cur_row);
-        }           
-        field_map[name].emplace_back(val);
+        auto it = field_map.find(name);
+        if (it == field_map.end()) {
+            std::vector<FieldVal> field_val(cur_row, 0.0);
+            field_val.emplace_back(val);
+            field_map.emplace(name, field_val);
+        } 
+        else {
+            it->second.emplace_back(val);
+        }
     }
     cur_row += 1;
     ts_vec.emplace_back(ts);
@@ -114,7 +117,7 @@ void LineWriter::add_row(TableName table_name, Timestamp ts, const std::unordere
 auto LineWriter::build() -> std::vector<InsertRequest> {
     std::vector<InsertRequest> insert_vec;
     insert_vec.reserve(mp.size());
-
+    Column column;
     for (auto &[table_name, t3] : mp) {
         InsertRequest insert_request;
         auto &[field_map, ts_vec, row_count] = t3;
@@ -123,7 +126,7 @@ auto LineWriter::build() -> std::vector<InsertRequest> {
         assert(row_count == ts_vec.size());
         // timestamp
         {
-            Column column;
+            column.Clear();
             column.set_column_name("ts");
             column.set_semantic_type(Column_SemanticType::Column_SemanticType_TIMESTAMP);
             column.set_datatype(ColumnDataType::TIMESTAMP_MILLISECOND);
@@ -131,12 +134,12 @@ auto LineWriter::build() -> std::vector<InsertRequest> {
             for (const auto& ts : ts_vec) {
                 values->add_ts_millisecond_values(ts);
             }
-            insert_request.add_columns()->CopyFrom(std::move(column));
+            insert_request.add_columns()->Swap(&column);
         }
         // field
         for (const auto&[field_name, field_vals] : field_map) {
             assert(row_count == field_vals.size());
-            Column column;
+            column.Clear();
             column.set_column_name(field_name);
             column.set_semantic_type(Column_SemanticType::Column_SemanticType_FIELD);
             column.set_datatype(ColumnDataType::FLOAT32);
@@ -144,7 +147,7 @@ auto LineWriter::build() -> std::vector<InsertRequest> {
             for (const auto& field_val : field_vals) {
                 values->add_f32_values(field_val);
             }
-            insert_request.add_columns()->CopyFrom(std::move(column));
+            insert_request.add_columns()->Swap(&column);
         }
         insert_vec.emplace_back(std::move(insert_request));
     }
