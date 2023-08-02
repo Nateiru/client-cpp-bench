@@ -123,8 +123,8 @@ void producer(const Core& core) {
 void consumer(const Core& core) {
 
     // client rpc
-    auto channel = grpc::CreateChannel("localhost:4001", grpc::InsecureChannelCredentials());
-    greptime::Database database("public", channel);
+    greptime::Database database("public", "localhost:4001");
+    auto stream_inserter = database.CreateStreamInserter();
 
     InsertBatch cache;
     InsertRequests insert_requests;
@@ -164,16 +164,16 @@ void consumer(const Core& core) {
         cache.clear();
         auto insert_vec = line_writer.build();
         insert_requests = to_insert_requests(insert_vec);
-        database.Insert(insert_requests);
+        stream_inserter.Write(insert_requests);
     }
 
-    database.InsertsDone();
+    stream_inserter.WriteDone();
 
-    grpc::Status status = database.Finish();
+    grpc::Status status = stream_inserter.Finish();
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
-        auto response = database.GetResponse();
+        auto response = stream_inserter.GetResponse();
 
         std::cout << "notice: [";
         std::cout << response.affected_rows().value() << "] ";
