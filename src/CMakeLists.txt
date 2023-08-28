@@ -17,5 +17,7 @@ add_executable(bench httpsql.cpp core.cpp main.cpp)
 # greptime lib
 target_link_libraries(bench
         PUBLIC 
-        greptimedb_client_lib  
+        greptimedb_client_lib
         )
+
+add_subdirectory(liautoinc)

@@ -126,50 +126,38 @@ void consumer(const Core& core) {
     greptime::Database database("public", "localhost:4001");
     auto stream_inserter = database.CreateStreamInserter();
 
-    InsertBatch cache;
     InsertRequests insert_requests;
-    cache.reserve(core.config->batch_number());
     while (true) {
         {
-            std::unique_lock<std::mutex> lock(mtx);
-            cv.wait(lock, []{
+            std::unique_lock<std::mutex> lk(mtx);
+            cv.wait(lk, []{
                 return !buffer.empty() || is_producer_done;
             });
 
             if (!buffer.empty()) {
                 auto insert_entry = buffer.front();
                 buffer.pop(); 
-                cache.emplace_back(std::move(insert_entry));
                 cv.notify_one();
-            }
-            else {
-                assert(is_producer_done);
-                if (cache.size() == 0) {
-                    break;
+                lk.unlock(); 
+                LineWriter line_writer;
+                auto ts = insert_entry.ts;
+                for (auto &[table_name, fields] : insert_entry.tables) {
+                    line_writer.add_row(table_name, ts, fields);
                 }
+                auto insert_vec = line_writer.build();
+                stream_inserter.Write(std::move(insert_vec));
+            }
+            else if (is_producer_done) {
+                break;
             }
         }
-        if (cache.size() < core.config->batch_number() && !is_producer_done) {
-            continue;
-        }
-
-        LineWriter line_writer;
-
-        for (auto &insert_entry : cache) {
-            auto ts = insert_entry.ts;
-            for (auto &[table_name, fields] : insert_entry.tables) {
-                line_writer.add_row(table_name, ts, fields);
-            }
-        }
-        cache.clear();
-        auto insert_vec = line_writer.build();
-        insert_requests = to_insert_requests(insert_vec);
-        stream_inserter.Write(insert_requests);
     }
 
+    std::cout << "Before WriteDone" << std::endl;
     stream_inserter.WriteDone();
 
     grpc::Status status = stream_inserter.Finish();
+    std::cout << "Finish" << std::endl;
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
@@ -231,7 +219,7 @@ int main(int argc, const char *argv[]) {
         Core core{config, can_id_map, index};
 
     /// =========== 2.http创建表 ===========
-        prepare(core);
+        // prepare(core);
 
     /// =========== 3.bench测试 ==========
         bench(core); 
