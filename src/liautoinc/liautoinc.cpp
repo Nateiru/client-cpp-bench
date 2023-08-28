@@ -1,12 +1,15 @@
+#include <string>
+#include <optional>
+#include <stdexcept>
+
+#include <nlohmann/json.hpp>
+#include <src/database.h>
+
 #include "liautoinc.h"
-#include "greptime/v1/column.pb.h"
 
 namespace liatoinc {
 
 std::unordered_map<int, std::vector<std::tuple<std::string, ColumnDataType>>> signalNameAndSchemaMap;
-
-// std::unordered_map<int, std::vector<std::string>> signalNameMap;
-// std::unordered_map<int, std::vector<ColumnDataType>> SignalSchemaMap;
 
 void setCanIdSignalNameList(std::unordered_map<
                 int, 
@@ -238,4 +241,3 @@ void commitData(std::map<int, int>  &canIdSizeMap,
     }
 }
 }
-
