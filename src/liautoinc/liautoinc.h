@@ -53,11 +53,12 @@ using Variant = std::variant<
 void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue);
 
 /*
- * canIdSizeMap 　canid -> canidSize(表示该canid有多少条数据)
- ×　timeStampVec　canid->时间戳列表　(表示canid各条数据的时间戳)
- *　valuesMap　　canid->{canid各条数据集合，每条数据对应某个时间戳canid的value集合}
- */
+* canIdSizeMap 　canid -> canidSize(表示该canid有多少条数据)
+×　timeStampVec　canid->时间戳列表　(表示canid各条数据的时间戳)
+*　valuesMap　　canid->{canid各条数据集合，每条数据对应某个时间戳canid的value集合}
+*/
 void commitData(std::map<int, int>  &canIdSizeMap,
                         std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
                         std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>>>> &valuesMap);
+
 };

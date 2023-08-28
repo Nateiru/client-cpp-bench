@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(liautoinc liautoinc.h liautoinc.cpp)
+add_executable(liautoinc liautoinc.h liautoinc.cpp main.cpp)
 
 target_link_libraries(liautoinc
         PUBLIC 

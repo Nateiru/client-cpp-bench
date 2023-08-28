@@ -1,6 +1,5 @@
 #include "liautoinc.h"
 #include "greptime/v1/column.pb.h"
-#include "src/core.h"
 
 namespace liatoinc {
 
@@ -39,7 +38,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<bool>(varValue);
             values->add_bool_values(value);
-            std::cout << "Bool: " << value << std::endl;
             break;
         }
         case ColumnDataType::INT8: {
@@ -48,7 +46,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<int8_t>(varValue);
             values->add_i8_values(value);
-            std::cout << "Int8: " << value << std::endl;
             break;
         }
         case ColumnDataType::INT16: {
@@ -57,7 +54,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<int16_t>(varValue);
             values->add_i16_values(value);
-            std::cout << "Int16: " << value << std::endl;
             break;
         }
         case ColumnDataType::INT32: {
@@ -66,7 +62,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<int32_t>(varValue);
             values->add_i32_values(value);
-            std::cout << "Int32: " << value << std::endl;
             break;
         }
         case ColumnDataType::INT64: {
@@ -75,7 +70,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<int64_t>(varValue);
             values->add_i64_values(value);
-            std::cout << "Int64: " << value << std::endl;
             break;
         }
         case ColumnDataType::UINT8: {
@@ -84,7 +78,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<uint8_t>(varValue);
             values->add_u8_values(value);
-            std::cout << "Uint8: " << value << std::endl;
             break;
         }
         case ColumnDataType::UINT16: {
@@ -93,7 +86,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<uint16_t>(varValue);
             values->add_u16_values(value);
-            std::cout << "Uint16: " << value << std::endl;
             break;
         }
         case ColumnDataType::UINT32: {
@@ -102,7 +94,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<uint32_t>(varValue);
             values->add_u32_values(value);
-            std::cout << "Uint32: " << value << std::endl;
             break;
         }
         case ColumnDataType::UINT64: {
@@ -111,7 +102,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<uint64_t>(varValue);
             values->add_u64_values(value);
-            std::cout << "Uint64: " << value << std::endl;
             break;
         }
         case ColumnDataType::FLOAT32: {
@@ -120,7 +110,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<float>(varValue);
             values->add_f32_values(value);
-            std::cout << "Float32: " << value << std::endl;
             break;
         }
         case ColumnDataType::FLOAT64: {
@@ -129,7 +118,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<double>(varValue);
             values->add_f64_values(value);
-            std::cout << "Float64: " << value << std::endl;
             break;
         }
         case ColumnDataType::STRING: {
@@ -138,7 +126,6 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
             }
             auto value = std::get<std::string>(varValue);
             values->add_string_values(value);
-            std::cout << "String: " << value << std::endl;
             break;
         }
         default:
@@ -148,9 +135,10 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
 }
 
 /*
- * canIdSizeMap 　canid -> canidSize(表示该canid有多少条数据)
+ *  canIdSizeMap 　canid -> canidSize(表示该canid有多少条数据)
  ×　timeStampVec　canid->时间戳列表　(表示canid各条数据的时间戳)
  *　valuesMap　　canid->{canid各条数据集合，每条数据对应某个时间戳canid的value集合}
+ *  throw exception if schema is inconsistent with data
  */
 void commitData(std::map<int, int>  &canIdSizeMap,
                         std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
@@ -193,8 +181,6 @@ void commitData(std::map<int, int>  &canIdSizeMap,
         }
 
         // n rows, m columns
-        // std::cout << "n: " << n << '\n';
-        // std::cout << "m: " << m << '\n';
         for (int j = 0; j < m; ++j) {
             const auto &[column_name, datatype] = nameAndSchema[j];
             Column column;
@@ -237,7 +223,6 @@ void commitData(std::map<int, int>  &canIdSizeMap,
     stream_inserter.WriteDone();
 
     grpc::Status status = stream_inserter.Finish();
-    std::cout << "Finish" << std::endl;
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
@@ -254,68 +239,3 @@ void commitData(std::map<int, int>  &canIdSizeMap,
 }
 }
 
-
-int main() {
-
-    std::string vname1 = "IntN";
-    liatoinc::ColumnDataType datatype1 = liatoinc::ColumnDataType::INT32;
-    std::vector<liatoinc::Variant> value1 = {(int32_t)1};
-
-    liatoinc::ColumnDataType datatype2 = liatoinc::ColumnDataType::FLOAT64;
-    std::string vname2 = "DoubleN";
-    std::vector<liatoinc::Variant> value2 = {(double)1.1};
-
-    liatoinc::ColumnDataType datatype3 = liatoinc::ColumnDataType::STRING;
-    std::string vname3 = "ArrayN";
-    std::vector<liatoinc::Variant> value3 = {(double)1.1, (double)2.2, (double)3.3, (double)4.4};
-    
-    int canid = 114514;
-
-    // column and schema
-    liatoinc::signalNameAndSchemaMap.emplace(
-        canid,
-        std::vector<std::tuple<std::string, liatoinc::ColumnDataType>>{
-            std::make_tuple(vname1, datatype1),
-            std::make_tuple(vname2, datatype2),
-            std::make_tuple(vname3, datatype3)
-        }
-    );
-
-    // values
-    std::map<int, int> canIdSizeMap;
-    canIdSizeMap.emplace(canid, 1);
-
-    std::map<int,std::shared_ptr<std::vector<long>>> timeStampVec;
-    timeStampVec.emplace(
-        canid,
-        std::make_shared<std::vector<long>>(
-            std::vector<long>{
-                111111111,
-                111111112,
-            }
-        )
-    );
-
-    std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>>>> valuesMap;
-
-    std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>> row1 {
-        std::make_shared<std::vector<liatoinc::Variant>>(value1),
-        std::make_shared<std::vector<liatoinc::Variant>>(value2),
-        std::make_shared<std::vector<liatoinc::Variant>>(value3)
-    };
-    std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>> row {
-        std::make_shared<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>(row1),
-        std::make_shared<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>(row1),
-    };
-    
-    valuesMap.emplace(canid, std::make_shared<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>>>(row));
-    try {
-        liatoinc::commitData(canIdSizeMap, timeStampVec, valuesMap);
-    }
-    catch (const std::exception& e) // caught by reference to base
-    {
-        std::cout << " a standard exception was caught, with message '"
-                  << e.what() << "'\n";
-    }
-    return 0;
-}
