@@ -1,6 +1,5 @@
 #include "core.h"
 #include <cassert>
-#include <src/config.hpp>
 #include <tuple>
 #include <vector>
 

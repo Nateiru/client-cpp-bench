@@ -3,7 +3,7 @@
 #include <greptime/v1/database.grpc.pb.h>
 #include <greptime/v1/database.pb.h>
 #include <greptime/v1/column.pb.h>
-#include <src/config.hpp>
+#include <src/bench/config.hpp>
 #include <string>
 
 using CanId = std::string;

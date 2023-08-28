@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# LiAutoInc example
-add_executable(example_liautoinc liautoinc.h liautoinc.cpp main.cpp)
+add_executable(bench httpsql.cpp core.cpp main.cpp)
 
-target_link_libraries(example_liautoinc
+# greptime lib
+target_link_libraries(bench
         PUBLIC 
         greptimedb_client_lib
-        )
-
-# LiAutoInc Lib
-add_library(liautoinc liautoinc.h liautoinc.cpp)
-
-target_link_libraries(liautoinc
-        PUBLIC
-        greptime_proto_cpp_lib
         )
