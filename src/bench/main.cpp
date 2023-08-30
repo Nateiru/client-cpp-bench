@@ -145,7 +145,7 @@ void consumer(const Core& core) {
                     line_writer.add_row(table_name, ts, fields);
                 }
                 auto insert_vec = line_writer.build();
-                stream_inserter.Write(std::move(insert_vec));
+                stream_inserter.WriteBatch(std::move(insert_vec));
             }
             else if (is_producer_done) {
                 break;

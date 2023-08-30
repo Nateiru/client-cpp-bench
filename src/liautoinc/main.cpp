@@ -3,25 +3,25 @@
 int main() {
 
     std::string vname1 = "IntN";
-    liatoinc::ColumnDataType datatype1 = liatoinc::ColumnDataType::INT32;
-    std::vector<liatoinc::Variant> value1 = {(int32_t)1};
+    liautoinc::ColumnDataType datatype1 = liautoinc::ColumnDataType::INT32;
+    std::vector<liautoinc::Variant> value1 = {(int32_t)1};
 
-    liatoinc::ColumnDataType datatype2 = liatoinc::ColumnDataType::FLOAT64;
+    liautoinc::ColumnDataType datatype2 = liautoinc::ColumnDataType::FLOAT64;
     std::string vname2 = "DoubleN";
-    std::vector<liatoinc::Variant> value2 = {(double)1.1};
+    std::vector<liautoinc::Variant> value2 = {(double)1.1};
 
-    liatoinc::ColumnDataType datatype3 = liatoinc::ColumnDataType::STRING;
+    liautoinc::ColumnDataType datatype3 = liautoinc::ColumnDataType::STRING;
     std::string vname3 = "ArrayN";
-    std::vector<liatoinc::Variant> value3 = {(double)1.1, (double)2.2, (double)3.3, (double)4.4};
+    std::vector<liautoinc::Variant> value3 = {(double)1.1, (double)2.2, (double)3.3, (double)4.4};
     
     int canid = 114514;
 
-    std::unordered_map<int, std::vector<std::tuple<std::string, liatoinc::ColumnDataType>>> signalNameAndSchemaMap;
+    std::unordered_map<int, std::vector<std::tuple<std::string, liautoinc::ColumnDataType>>> signalNameAndSchemaMap;
 
     // column and schema
     signalNameAndSchemaMap.emplace(
         canid,
-        std::vector<std::tuple<std::string, liatoinc::ColumnDataType>>{
+        std::vector<std::tuple<std::string, liautoinc::ColumnDataType>>{
             std::make_tuple(vname1, datatype1),
             std::make_tuple(vname2, datatype2),
             std::make_tuple(vname3, datatype3)
@@ -43,23 +43,26 @@ int main() {
         )
     );
 
-    std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>>>> valuesMap;
+    std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>>>>>> valuesMap;
 
-    std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>> row1 {
-        std::make_shared<std::vector<liatoinc::Variant>>(value1),
-        std::make_shared<std::vector<liatoinc::Variant>>(value2),
-        std::make_shared<std::vector<liatoinc::Variant>>(value3)
+    std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>> row1 {
+        std::make_shared<std::vector<liautoinc::Variant>>(value1),
+        std::make_shared<std::vector<liautoinc::Variant>>(value2),
+        std::make_shared<std::vector<liautoinc::Variant>>(value3)
     };
-    std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>> row {
-        std::make_shared<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>(row1),
-        std::make_shared<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>(row1),
+    std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>>>> row {
+        std::make_shared<std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>>>(row1),
+        std::make_shared<std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>>>(row1),
     };
     
-    valuesMap.emplace(canid, std::make_shared<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liatoinc::Variant>>>>>>(row));
+    valuesMap.emplace(canid, std::make_shared<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<liautoinc::Variant>>>>>>(row));
 
+    liautoinc::LiAutoIncClient liautoinc_client("public", "localhost:4001");
     try {
-        liatoinc::setCanIdSignalNameList(signalNameAndSchemaMap);
-        liatoinc::commitData(canIdSizeMap, timeStampVec, valuesMap);
+        liautoinc_client.setCanIdSignalNameList(signalNameAndSchemaMap);
+        liautoinc_client.commitData(canIdSizeMap, timeStampVec, valuesMap);
+        liautoinc_client.commitData(canIdSizeMap, timeStampVec, valuesMap);
+        liautoinc_client.finish();
     }
     catch (const std::exception& e) // caught by reference to base
     {

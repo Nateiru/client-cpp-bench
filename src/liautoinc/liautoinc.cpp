@@ -3,19 +3,29 @@
 #include <stdexcept>
 
 #include <nlohmann/json.hpp>
-#include <src/database.h>
 
 #include "liautoinc.h"
 
-namespace liatoinc {
+#include <map>
+#include <tuple>
+#include <memory>
+#include <vector>
+#include <cstdint>
+#include <variant>
 
-std::unordered_map<int, std::vector<std::tuple<std::string, ColumnDataType>>> signalNameAndSchemaMap;
+#include <greptime/v1/common.pb.h>
+#include <greptime/v1/column.pb.h>
+#include <greptime/v1/database.pb.h>
+#include <greptime/v1/column.grpc.pb.h>
+#include <greptime/v1/database.grpc.pb.h>
 
-void setCanIdSignalNameList(std::unordered_map<
+namespace liautoinc {
+
+void LiAutoIncClient::setCanIdSignalNameList(std::unordered_map<
                 int, 
-                std::vector<std::tuple<std::string, ColumnDataType>>> &signalNameAndSchemaMap) {
+                std::vector<std::tuple<std::string, ColumnDataType>>> signalNameAndSchemaMap_) {
 
-    liatoinc::signalNameAndSchemaMap = signalNameAndSchemaMap;
+    signalNameAndSchemaMap = std::move(signalNameAndSchemaMap_);
 }
 
 using Variant = std::variant<
@@ -33,7 +43,7 @@ using Variant = std::variant<
                 std::string
                 >;
 
-void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) {
+void LiAutoIncClient::addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) {
     switch (datatype) {
         case ColumnDataType::BOOLEAN: {
             if (!std::holds_alternative<bool>(varValue)) {
@@ -143,13 +153,9 @@ void addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) 
  *　valuesMap　　canid->{canid各条数据集合，每条数据对应某个时间戳canid的value集合}
  *  throw exception if schema is inconsistent with data
  */
-void commitData(std::map<int, int>  &canIdSizeMap,
+void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
                         std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
                         std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>>>> &valuesMap) {
-    
-    std::vector<InsertRequest> insReqVec;
-    insReqVec.reserve(canIdSizeMap.size());
-
     for (const auto &[canid, n] : canIdSizeMap) {
 
         const auto & tsVec = timeStampVec[canid];
@@ -216,28 +222,8 @@ void commitData(std::map<int, int>  &canIdSizeMap,
             }
             insReq.add_columns()->Swap(&column);
         }
-        insReqVec.push_back(std::move(insReq));
-    }
-
-    greptime::Database database("public", "localhost:4001");
-    auto stream_inserter = database.CreateStreamInserter();
-
-    stream_inserter.Write(std::move(insReqVec));
-    stream_inserter.WriteDone();
-
-    grpc::Status status = stream_inserter.Finish();
-
-    if (status.ok()) {
-        std::cout << "success!" << std::endl;
-        auto response = stream_inserter.GetResponse();
-
-        std::cout << "notice: [";
-        std::cout << response.affected_rows().value() << "] ";
-        std::cout << "rows of data are successfully inserted into the public database"<< std::endl;
-    } else {
-        std::cout << "fail!" << std::endl;
-        std::string emsg = "error message: " + status.error_message() + "\nerror details: " + status.error_details() + "\n"; 
-        throw std::runtime_error(emsg);
+        database.stream_inserter.Write(std::move(insReq));
     }
 }
+
 }
