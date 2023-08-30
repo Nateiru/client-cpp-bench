@@ -13,12 +13,14 @@
 # limitations under the License.
 
 # LiAutoInc Lib
-add_library(liautoinc liautoinc.h liautoinc.cpp)
+add_library(liautoinc STATIC liautoinc.h liautoinc.cpp)
 
 target_link_libraries(liautoinc
         PUBLIC
         greptimedb_client_lib
         )
+
+bundle_static_library(liautoinc zhuziyi)
 
 # LiAutoInc example
 add_executable(example_liautoinc main.cpp)
@@ -27,4 +29,3 @@ target_link_libraries(example_liautoinc
         PUBLIC 
         liautoinc
         )
-
