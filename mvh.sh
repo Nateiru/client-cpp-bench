@@ -19,10 +19,11 @@ for SOURCE_DIR in "${INCLUDE_DIR[@]}"; do
    cp -r "$SOURCE_DIR" "$DESTINATION_DIR/"
 done
 cp -r "${SCRPIT_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/include/"* "$DESTINATION_DIR/"
+cp -r "${SCRPIT_ROOT_DIR}/src/liautoinc/liautoinc.h" "$DESTINATION_DIR/liautoinc.h"
 
 # 复制静态库
 mkdir -p "$SCRPIT_ROOT_DIR/liautoinc/lib"
-cp -r "$SCRPIT_ROOT_DIR/build"/*.a  "$SCRPIT_ROOT_DIR/liautoinc/lib"
+cp -r "$SCRPIT_ROOT_DIR/build/libzhuziyi.a"  "$SCRPIT_ROOT_DIR/liautoinc/lib/libliautoinc.a"
 
 # 递归函数，用于删除非 .h 文件和空目录
 clean_directory() {
@@ -37,5 +38,5 @@ clean_directory() {
     done
 }
 
-DIRECTORY_TO_CLEAN="$SCRPIT_ROOT_DIR/liautoinc"
+DIRECTORY_TO_CLEAN="$SCRPIT_ROOT_DIR/liautoinc/include"
 clean_directory "$DIRECTORY_TO_CLEAN"
