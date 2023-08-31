@@ -39,4 +39,4 @@ clean_directory() {
 }
 
 DIRECTORY_TO_CLEAN="$SCRPIT_ROOT_DIR/liautoinc/include"
-clean_directory "$DIRECTORY_TO_CLEAN"
+#clean_directory "$DIRECTORY_TO_CLEAN"
