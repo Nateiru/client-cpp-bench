@@ -15,6 +15,21 @@ cmake ..
 make -j$(nproc)
 ```
 
+## LiAutoInc
+```bash
+./mvh.sh
+
+cd liautoinc
+
+make -j$(nproc)
+
+./main
+```
+
+
+
+
+
 ## Data
 
 ```bash
