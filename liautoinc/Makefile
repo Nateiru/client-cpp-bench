@@ -1,4 +1,4 @@
-CXX = /opt/android-ndk-r23c/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
+CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17 -static
 
 ROOT_DIR = $(shell pwd)
