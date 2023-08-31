@@ -29,7 +29,7 @@ cp -r "$SCRPIT_ROOT_DIR/build/libzhuziyi.a"  "$SCRPIT_ROOT_DIR/liautoinc/lib/lib
 clean_directory() {
     local dir="$1"
     for file in "$dir"/*; do
-        if [[ -f "$file" && "${file##*.}" != "h" ]]; then
+        if [[ -f "$file" && "${file##*.}" != "h" && "${file##*.}" != "inc" ]]; then
             rm -f "$file"
         elif [[ -d "$file" ]]; then
             clean_directory "$file"
@@ -39,4 +39,4 @@ clean_directory() {
 }
 
 DIRECTORY_TO_CLEAN="$SCRPIT_ROOT_DIR/liautoinc/include"
-#clean_directory "$DIRECTORY_TO_CLEAN"
+clean_directory "$DIRECTORY_TO_CLEAN"
