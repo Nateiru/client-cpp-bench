@@ -1,12 +1,12 @@
+#pragma once
+
 #include <map>
 #include <memory>
 #include <vector>
 #include <cstdint>
-#include <src/database.h>
+#include <unordered_map>
 
 namespace liautoinc {
-
-using greptime::Database;
 
 enum SignalTypeEnum {
     boolType = 0,
@@ -93,8 +93,7 @@ public:
     * 端口指 greptimedb gRPC service 端口
     * 比如：liautoinc::LiAutoIncClient liautoinc_client("public", "localhost:4001");
     */
-    LiAutoIncClient(std::string dbname_, std::string greptimedb_endpoint_) : 
-                    database(dbname_, greptimedb_endpoint_){}
+    LiAutoIncClient(std::string dbname_, std::string greptimedb_endpoint_);
 
     /*
     * 设置列名和schema
@@ -118,10 +117,12 @@ public:
     * 调用 finish 后整个 Client 写入结束
     */
     void finish();
-private:
 
+    ~LiAutoIncClient();
+private:
     std::unordered_map<int, std::vector<std::pair<std::string, SignalTypeEnum>>> signalNameAndSchemaMap;
 
-    Database database;
+    struct Database;
+    std::unique_ptr<Database> pimpl;
 };
 }

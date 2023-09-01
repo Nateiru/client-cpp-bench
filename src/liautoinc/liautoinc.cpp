@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 
 #include "liautoinc.h"
+#include <src/database.h>
 
 #include <greptime/v1/column.pb.h>
 #include <greptime/v1/column.grpc.pb.h>
@@ -213,6 +214,16 @@ ColumnDataType enumToDataType(SignalTypeEnum type) {
     return ColumnDataType::STRING;
 }
 
+struct LiAutoIncClient::Database {
+    Database(std::string dbname_, std::string greptimedb_endpoint_) : database(dbname_, greptimedb_endpoint_) {}
+    greptime::Database database;
+};
+
+LiAutoIncClient::LiAutoIncClient(std::string dbname_, std::string greptimedb_endpoint_) : 
+                    pimpl(new Database(dbname_, greptimedb_endpoint_)){}
+
+LiAutoIncClient::~LiAutoIncClient() {}
+
 /*
  *  canIdSizeMap 　canid -> canidSize(表示该canid有多少条数据)
  ×　timeStampVec　canid->时间戳列表　(表示canid各条数据的时间戳)
@@ -281,17 +292,17 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
             }
             insReq.add_columns()->Swap(&column);
         }
-        database.stream_inserter.Write(std::move(insReq));
+        pimpl->database.stream_inserter.Write(std::move(insReq));
     }
 }
 
 void LiAutoIncClient::finish() {
-    database.stream_inserter.WriteDone();
-    grpc::Status status = database.stream_inserter.Finish();
+    pimpl->database.stream_inserter.WriteDone();
+    grpc::Status status = pimpl->database.stream_inserter.Finish();
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
-        auto response = database.stream_inserter.GetResponse();
+        auto response = pimpl->database.stream_inserter.GetResponse();
 
         std::cout << "notice: [";
         std::cout << response.affected_rows().value() << "] ";

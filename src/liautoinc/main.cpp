@@ -1,3 +1,6 @@
+#include <string>
+#include <iostream>
+
 #include "liautoinc.h"
 
 using namespace::liautoinc;
