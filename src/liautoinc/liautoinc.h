@@ -1,26 +1,12 @@
 #include <map>
-#include <tuple>
 #include <memory>
 #include <vector>
 #include <cstdint>
-#include <variant>
 #include <src/database.h>
-#include <greptime/v1/common.pb.h>
-#include <greptime/v1/column.pb.h>
-#include <greptime/v1/database.pb.h>
-#include <greptime/v1/column.grpc.pb.h>
-#include <greptime/v1/database.grpc.pb.h>
 
 namespace liautoinc {
 
-
-using greptime::v1::Column;
-using greptime::v1::Column_SemanticType;
-using greptime::v1::ColumnDataType;
-using greptime::v1::InsertRequest;
-using greptime::v1::Column_Values;
 using greptime::Database;
-using greptime::StreamInserter;
 
 enum SignalTypeEnum {
     boolType = 0,
