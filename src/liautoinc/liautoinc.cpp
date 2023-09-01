@@ -23,128 +23,201 @@ namespace liautoinc {
 
 void LiAutoIncClient::setCanIdSignalNameList(std::unordered_map<
                 int, 
-                std::vector<std::tuple<std::string, ColumnDataType>>> signalNameAndSchemaMap_) {
+                std::vector<std::pair<std::string, SignalTypeEnum>>> signalNameAndSchemaMap_) {
 
     signalNameAndSchemaMap = std::move(signalNameAndSchemaMap_);
 }
 
-using Variant = std::variant<
-                bool,
-                int8_t,
-                int16_t,
-                int32_t,
-                int64_t,
-                uint8_t,
-                uint16_t,
-                uint32_t,
-                uint64_t,
-                float,
-                double,
-                std::string
-                >;
-
-void LiAutoIncClient::addValue(Column_Values *values, ColumnDataType datatype, Variant varValue) {
-    switch (datatype) {
-        case ColumnDataType::BOOLEAN: {
-            if (!std::holds_alternative<bool>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<bool>(varValue);
+void addValue(Column_Values *values, const SignalValue &typeValue) {
+    switch (typeValue.type) {
+        case SignalTypeEnum::boolType: {
+            auto value = typeValue.value.boolValue;
             values->add_bool_values(value);
             break;
         }
-        case ColumnDataType::INT8: {
-            if (!std::holds_alternative<int8_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<int8_t>(varValue);
+        case SignalTypeEnum::int8Type: {
+            auto value = typeValue.value.int8Value;
             values->add_i8_values(value);
             break;
         }
-        case ColumnDataType::INT16: {
-            if (!std::holds_alternative<int16_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<int16_t>(varValue);
+        case SignalTypeEnum::int16Type: {
+            auto value = typeValue.value.int16Value;
             values->add_i16_values(value);
             break;
         }
-        case ColumnDataType::INT32: {
-            if (!std::holds_alternative<int32_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<int32_t>(varValue);
+        case SignalTypeEnum::int32Type: {
+            auto value = typeValue.value.int32Value;
             values->add_i32_values(value);
             break;
         }
-        case ColumnDataType::INT64: {
-            if (!std::holds_alternative<int64_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<int64_t>(varValue);
+        case SignalTypeEnum::int64Type: {
+            auto value = typeValue.value.int64Value;
             values->add_i64_values(value);
             break;
         }
-        case ColumnDataType::UINT8: {
-            if (!std::holds_alternative<uint8_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<uint8_t>(varValue);
+        case SignalTypeEnum::uint8Type: {
+            auto value = typeValue.value.uint8Value;
             values->add_u8_values(value);
             break;
         }
-        case ColumnDataType::UINT16: {
-            if (!std::holds_alternative<uint16_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<uint16_t>(varValue);
+        case SignalTypeEnum::uint16Type: {
+            auto value = typeValue.value.uint8Value;
             values->add_u16_values(value);
             break;
         }
-        case ColumnDataType::UINT32: {
-            if (!std::holds_alternative<uint32_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<uint32_t>(varValue);
+        case SignalTypeEnum::uint32Type: {
+            auto value = typeValue.value.uint32Value;
             values->add_u32_values(value);
             break;
         }
-        case ColumnDataType::UINT64: {
-            if (!std::holds_alternative<uint64_t>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<uint64_t>(varValue);
+        case SignalTypeEnum::uint64Type: {
+            auto value = typeValue.value.uint64Value;
             values->add_u64_values(value);
             break;
         }
-        case ColumnDataType::FLOAT32: {
-            if (!std::holds_alternative<float>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<float>(varValue);
+        case SignalTypeEnum::float32Type: {
+            auto value = typeValue.value.float32Value;
             values->add_f32_values(value);
             break;
         }
-        case ColumnDataType::FLOAT64: {
-            if (!std::holds_alternative<double>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<double>(varValue);
+        case SignalTypeEnum::doubleType: {
+            auto value = typeValue.value.doubleValue;
             values->add_f64_values(value);
-            break;
-        }
-        case ColumnDataType::STRING: {
-            if (!std::holds_alternative<std::string>(varValue)) {
-                throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
-            }
-            auto value = std::get<std::string>(varValue);
-            values->add_string_values(value);
             break;
         }
         default:
             break;
     }
 
+}
+
+void addStringValue(Column_Values *values, const std::vector<SignalValue> &typeValues) {
+    nlohmann::json jsonArray = nlohmann::json::array();
+    auto type = typeValues.back().type;
+    switch (type) {
+        case SignalTypeEnum::boolType: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.boolValue;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::int8Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.int8Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::int16Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.int16Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::int32Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.int32Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::int64Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.int64Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::uint8Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.uint8Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::uint16Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.uint8Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::uint32Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.uint32Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::uint64Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.uint64Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::float32Type: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.float32Value;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        case SignalTypeEnum::doubleType: {
+            for (const auto & typeValue : typeValues) { 
+                auto value = typeValue.value.doubleValue;
+                jsonArray.push_back(value);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    values->add_string_values(jsonArray.dump());
+}
+
+ColumnDataType enumToDataType(SignalTypeEnum type) {
+    switch (type) {
+        case SignalTypeEnum::boolType: {
+            return ColumnDataType::BOOLEAN;
+        }
+        case SignalTypeEnum::int8Type: {
+            return ColumnDataType::INT8;
+        }
+        case SignalTypeEnum::int16Type: {
+            return ColumnDataType::INT16;
+        }
+        case SignalTypeEnum::int32Type: {
+            return ColumnDataType::INT32;
+        }
+        case SignalTypeEnum::int64Type: {
+            return ColumnDataType::INT64;
+        }
+        case SignalTypeEnum::uint8Type: {
+            return ColumnDataType::UINT8;
+        }
+        case SignalTypeEnum::uint16Type: {
+            return ColumnDataType::UINT16;
+        }
+        case SignalTypeEnum::uint32Type: {
+            return ColumnDataType::UINT32;
+        }
+        case SignalTypeEnum::uint64Type: {
+            return ColumnDataType::UINT64;
+        }
+        case SignalTypeEnum::float32Type: {
+            return ColumnDataType::FLOAT32;
+        }
+        case SignalTypeEnum::doubleType: {
+            return ColumnDataType::FLOAT64;
+        }
+        default:
+            break;
+    }
+    throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
+    return ColumnDataType::STRING;
 }
 
 /*
@@ -155,7 +228,7 @@ void LiAutoIncClient::addValue(Column_Values *values, ColumnDataType datatype, V
  */
 void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
                         std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
-                        std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>>>> &valuesMap) {
+                        std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<SignalValue>>>>>>> &valuesMap) {
     for (const auto &[canid, n] : canIdSizeMap) {
 
         const auto & tsVec = timeStampVec[canid];
@@ -191,33 +264,26 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
 
         // n rows, m columns
         for (int j = 0; j < m; ++j) {
-            const auto &[column_name, datatype] = nameAndSchema[j];
+            const auto &column_name = nameAndSchema[j].first;
+            const auto &signal_type_enum = nameAndSchema[j].second;
             Column column;
             column.set_column_name(column_name);
             column.set_semantic_type(Column_SemanticType::Column_SemanticType_FIELD);
-            column.set_datatype(datatype);
+            column.set_datatype(enumToDataType(signal_type_enum));
             auto values = column.mutable_values();
             for (int i = 0; i < n; ++i) {
                 assert(m == valuesVec->at(i)->size());
-                const std::vector<Variant> &fields = *valuesVec->at(i)->at(j);
+                const std::vector<SignalValue> &fields = *valuesVec->at(i)->at(j);
                 if (fields.size() == 0) {
                     // null
                     throw std::logic_error("field is empty");
                 } else if(fields.size() == 1) {
-                    const Variant &value = fields[0];
-                    addValue(values, datatype, value);
-
+                    // only fields[0]
+                    addValue(values, fields[0]);
                 } else {
                     // array [1, 2] -> std::string
-                    nlohmann::json jsonArray = nlohmann::json::array();
-                    for (const auto &v : fields) {
-                        std::visit([&jsonArray](auto&& arg) {
-                            jsonArray.push_back(arg);
-                        }, v);
-                    }
-                    std::string value = jsonArray.dump();
-                    // std::cout << "json array: " << value << std::endl;
-                    values->add_string_values(value);
+                    column.set_datatype(ColumnDataType::STRING);
+                    addStringValue(values, fields);
                 }
             }
             insReq.add_columns()->Swap(&column);
@@ -226,4 +292,21 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
     }
 }
 
+void LiAutoIncClient::finish() {
+    database.stream_inserter.WriteDone();
+    grpc::Status status = database.stream_inserter.Finish();
+
+    if (status.ok()) {
+        std::cout << "success!" << std::endl;
+        auto response = database.stream_inserter.GetResponse();
+
+        std::cout << "notice: [";
+        std::cout << response.affected_rows().value() << "] ";
+        std::cout << "rows of data are successfully inserted into the public database"<< std::endl;
+    } else {
+        std::cout << "fail!" << std::endl;
+        std::string emsg = "error message: " + status.error_message() + "\nerror details: " + status.error_details() + "\n"; 
+        throw std::runtime_error(emsg);
+    }
+}
 }
