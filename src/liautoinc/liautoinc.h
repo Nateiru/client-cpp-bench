@@ -62,7 +62,8 @@ public:
     */
     void commitData(std::map<int, int>  &canIdSizeMap,
                             std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
-                            std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>>>> &valuesMap);
+                            std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>> &valuesMap,
+                            std::vector<std::string> &binaryValue);
 
     /*
     * commitData一只写入数据，最终需要调用 finish 返回写入的状态

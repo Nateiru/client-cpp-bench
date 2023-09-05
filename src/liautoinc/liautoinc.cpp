@@ -154,8 +154,9 @@ void LiAutoIncClient::addValue(Column_Values *values, ColumnDataType datatype, V
  *  throw exception if schema is inconsistent with data
  */
 void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
-                        std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
-                        std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>>>> &valuesMap) {
+                            std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
+                            std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<Variant>>>>> &valuesMap,
+                            std::vector<std::string> &binaryValue) {
     for (const auto &[canid, n] : canIdSizeMap) {
 
         const auto & tsVec = timeStampVec[canid];
@@ -199,26 +200,19 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
             auto values = column.mutable_values();
             for (int i = 0; i < n; ++i) {
                 assert(m == valuesVec->at(i)->size());
-                const std::vector<Variant> &fields = *valuesVec->at(i)->at(j);
-                if (fields.size() == 0) {
-                    // null
-                    throw std::logic_error("field is empty");
-                } else if(fields.size() == 1) {
-                    const Variant &value = fields[0];
-                    addValue(values, datatype, value);
-
-                } else {
-                    // array [1, 2] -> std::string
-                    nlohmann::json jsonArray = nlohmann::json::array();
-                    for (const auto &v : fields) {
-                        std::visit([&jsonArray](auto&& arg) {
-                            jsonArray.push_back(arg);
-                        }, v);
+                const Variant &varValue = valuesVec->at(i)->at(j);
+                if (datatype == ColumnDataType::STRING) {
+                    if (!std::holds_alternative<uint32_t>(varValue)) {
+                        throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
                     }
-                    std::string value = jsonArray.dump();
-                    // std::cout << "json array: " << value << std::endl;
-                    values->add_string_values(value);
+                    auto value = std::get<uint32_t>(varValue);
+                    if (value >= binaryValue.size()) {
+                        throw std::logic_error("The data type indicated by the schema is inconsistent with the real data type");
+                    }
+                    values->add_string_values(binaryValue[value]);
+                    continue;
                 }
+                addValue(values, datatype, varValue);
             }
             insReq.add_columns()->Swap(&column);
         }
