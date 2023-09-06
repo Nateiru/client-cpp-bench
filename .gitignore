@@ -56,3 +56,5 @@ cmake-build-debug
 
 .vscode
 build/
+build.sh
+*.tar.gz

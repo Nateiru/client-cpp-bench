@@ -13,12 +13,12 @@ INCLUDE_DIR=(
         "${SCRPIT_ROOT_DIR}/contrib/greptimedb-client-cpp/src"
         )
 
-# 复制所需要的 .h 文件
-mkdir -p "$SCRPIT_ROOT_DIR/liautoinc/include"
-for SOURCE_DIR in "${INCLUDE_DIR[@]}"; do
-   cp -r "$SOURCE_DIR" "$DESTINATION_DIR/"
-done
-cp -r "${SCRPIT_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/include/"* "$DESTINATION_DIR/"
+# # 复制所需要的 .h 文件
+# mkdir -p "$SCRPIT_ROOT_DIR/liautoinc/include"
+# for SOURCE_DIR in "${INCLUDE_DIR[@]}"; do
+#    cp -r "$SOURCE_DIR" "$DESTINATION_DIR/"
+# done
+# cp -r "${SCRPIT_ROOT_DIR}/contrib/greptimedb-client-cpp/contrib/grpc/include/"* "$DESTINATION_DIR/"
 cp -r "${SCRPIT_ROOT_DIR}/src/liautoinc/liautoinc.h" "$DESTINATION_DIR/liautoinc.h"
 
 # 复制静态库
