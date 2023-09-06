@@ -23,60 +23,60 @@ void LiAutoIncClient::setCanIdSignalNameList(std::unordered_map<
     signalNameAndSchemaMap = std::move(signalNameAndSchemaMap_);
 }
 
-void addValue(Column_Values *values, const SignalValue &typeValue) {
-    switch (typeValue.type) {
+void addValue(Column_Values *values, const SignalTypeEnum &type, const SignalValue &typeValue) {
+    switch (type) {
         case SignalTypeEnum::boolType: {
-            auto value = typeValue.value.boolValue;
+            auto value = typeValue.boolValue;
             values->add_bool_values(value);
             break;
         }
         case SignalTypeEnum::int8Type: {
-            auto value = typeValue.value.int8Value;
+            auto value = typeValue.int8Value;
             values->add_i8_values(value);
             break;
         }
         case SignalTypeEnum::int16Type: {
-            auto value = typeValue.value.int16Value;
+            auto value = typeValue.int16Value;
             values->add_i16_values(value);
             break;
         }
         case SignalTypeEnum::int32Type: {
-            auto value = typeValue.value.int32Value;
+            auto value = typeValue.int32Value;
             values->add_i32_values(value);
             break;
         }
         case SignalTypeEnum::int64Type: {
-            auto value = typeValue.value.int64Value;
+            auto value = typeValue.int64Value;
             values->add_i64_values(value);
             break;
         }
         case SignalTypeEnum::uint8Type: {
-            auto value = typeValue.value.uint8Value;
+            auto value = typeValue.uint8Value;
             values->add_u8_values(value);
             break;
         }
         case SignalTypeEnum::uint16Type: {
-            auto value = typeValue.value.uint8Value;
+            auto value = typeValue.uint8Value;
             values->add_u16_values(value);
             break;
         }
         case SignalTypeEnum::uint32Type: {
-            auto value = typeValue.value.uint32Value;
+            auto value = typeValue.uint32Value;
             values->add_u32_values(value);
             break;
         }
         case SignalTypeEnum::uint64Type: {
-            auto value = typeValue.value.uint64Value;
+            auto value = typeValue.uint64Value;
             values->add_u64_values(value);
             break;
         }
         case SignalTypeEnum::float32Type: {
-            auto value = typeValue.value.float32Value;
+            auto value = typeValue.float32Value;
             values->add_f32_values(value);
             break;
         }
         case SignalTypeEnum::doubleType: {
-            auto value = typeValue.value.doubleValue;
+            auto value = typeValue.doubleValue;
             values->add_f64_values(value);
             break;
         }
@@ -86,94 +86,7 @@ void addValue(Column_Values *values, const SignalValue &typeValue) {
 
 }
 
-void addStringValue(Column_Values *values, const std::vector<SignalValue> &typeValues) {
-    nlohmann::json jsonArray = nlohmann::json::array();
-    auto type = typeValues.back().type;
-    switch (type) {
-        case SignalTypeEnum::boolType: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.boolValue;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::int8Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.int8Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::int16Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.int16Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::int32Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.int32Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::int64Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.int64Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::uint8Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.uint8Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::uint16Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.uint8Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::uint32Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.uint32Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::uint64Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.uint64Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::float32Type: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.float32Value;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        case SignalTypeEnum::doubleType: {
-            for (const auto & typeValue : typeValues) { 
-                auto value = typeValue.value.doubleValue;
-                jsonArray.push_back(value);
-            }
-            break;
-        }
-        default:
-            break;
-    }
-    values->add_string_values(jsonArray.dump());
-}
-
-ColumnDataType enumToDataType(SignalTypeEnum type) {
+static ColumnDataType enumToDataType(SignalTypeEnum type) {
     switch (type) {
         case SignalTypeEnum::boolType: {
             return ColumnDataType::BOOLEAN;
@@ -244,14 +157,19 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
         const auto & n = _.second;
         const auto & tsVec = timeStampVec[canid];
         const auto & valuesVec = valuesMap[canid];
+        if (!signalNameAndSchemaMap.count(canid)) {
+            std::cout << "no this table_" << canid << std::endl;
+            continue;
+        }
         const auto & nameAndSchema = signalNameAndSchemaMap[canid];
+
 
         if(tsVec->size() != valuesVec->size()) {
             throw std::logic_error("The timestamp is inconsistent with the number of data rows");
         }
 
         if (n == 0) {
-            return;
+            continue;
         }
         int m = valuesVec->at(0)->size();
 
@@ -278,6 +196,10 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
             const auto &column_name = nameAndSchema[j].first;
             const auto &signal_type_enum = nameAndSchema[j].second;
             Column column;
+            if (column_name == "") {
+                std::cout << "column_name is null" << std::endl;
+                return;
+            }
             column.set_column_name(column_name);
             column.set_semantic_type(Column_SemanticType::Column_SemanticType_FIELD);
             column.set_datatype(enumToDataType(signal_type_enum));
@@ -286,11 +208,11 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
                 assert(m == valuesVec->at(i)->size());
                 const SignalValue &field = valuesVec->at(i)->at(j);
                 if (signal_type_enum == SignalTypeEnum::binType) {
-                    uint32_t idx = field.value.uint32Value;
+                    uint32_t idx = field.uint32Value;
                     values->add_string_values(binaryValue[idx]);
                     continue;
                 }
-                addValue(values, field);
+                addValue(values, signal_type_enum, field);
             }
             insReq.add_columns()->Swap(&column);
         }

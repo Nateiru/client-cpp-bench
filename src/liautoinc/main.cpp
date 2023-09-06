@@ -10,15 +10,18 @@ int main() {
 
     std::string vname1 = "IntN";
     SignalTypeEnum datatype1 = SignalTypeEnum::int32Type;
-    SignalValue value1 = SignalValue((int32_t)1);
+    SignalValue value1;
+    value1.uint32Value = 1;
 
     std::string vname2 = "DoubleN";
     SignalTypeEnum datatype2 = SignalTypeEnum::doubleType;
-    SignalValue value2 = SignalValue((double)1.1);
+    SignalValue value2;
+    value2.doubleValue = (double)1.1;
 
     std::string vname3 = "ArrayN";
     SignalTypeEnum datatype3 = SignalTypeEnum::binType;
-    SignalValue value3 = SignalValue((uint32_t)0);
+    SignalValue value3;
+    value3.uint32Value = 0;
     std::vector<std::string> binVec = {"[1,1,1,1]"};
     
     int canid = 114515;
@@ -69,7 +72,7 @@ int main() {
     }
     catch (const std::exception& e) // caught by reference to base
     {
-        std::cout << " a standard exception was caught, with message '"
+        std::cout << " a standard exception was caught, with message "
                   << e.what() << "'\n";
     }
     return 0;

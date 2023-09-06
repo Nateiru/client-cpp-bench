@@ -23,66 +23,18 @@ enum SignalTypeEnum {
     binType,
 };
 
-struct SignalValue {
-    SignalTypeEnum type;
-    union SignalValueUnion {
-        bool boolValue;
-        int8_t int8Value;
-        int16_t int16Value;
-        int32_t int32Value;
-        int64_t int64Value;
-        uint8_t uint8Value;
-        uint16_t uint16Value;
-        uint32_t uint32Value;
-        uint64_t uint64Value;
-        float float32Value;
-        double doubleValue;
-    }value;
-    SignalValue() : type(SignalTypeEnum::boolType), value {} {}
-
-    SignalValue(bool b) : type(SignalTypeEnum::boolType) {
-        value.boolValue = b;
-    }
-
-    SignalValue(int8_t i) : type(SignalTypeEnum::int8Type) {
-        value.int8Value = i;
-    }
-
-    SignalValue(int16_t i) : type(SignalTypeEnum::int16Type) {
-        value.int16Value = i;
-    }
-
-    SignalValue(int32_t i) : type(SignalTypeEnum::int32Type) {
-        value.int32Value = i;
-    }
-
-    SignalValue(int64_t i) : type(SignalTypeEnum::int64Type) {
-        value.int64Value = i;
-    }
-
-    SignalValue(uint8_t u) : type(SignalTypeEnum::uint8Type) {
-        value.uint8Value = u;
-    }
-
-    SignalValue(uint16_t u) : type(SignalTypeEnum::uint16Type) {
-        value.uint16Value = u;
-    }
-
-    SignalValue(uint32_t u) : type(SignalTypeEnum::uint32Type) {
-        value.uint32Value = u;
-    }
-
-    SignalValue(uint64_t u) : type(SignalTypeEnum::uint64Type) {
-        value.uint64Value = u;
-    }
-
-    SignalValue(float f) : type(SignalTypeEnum::float32Type) {
-        value.float32Value = f;
-    }
-
-    SignalValue(double d) : type(SignalTypeEnum::doubleType) {
-        value.doubleValue = d;
-    }
+union SignalValue {
+    bool boolValue;
+    int8_t int8Value;
+    int16_t int16Value;
+    int32_t int32Value;
+    int64_t int64Value;
+    uint8_t uint8Value;
+    uint16_t uint16Value;
+    uint32_t uint32Value;
+    uint64_t uint64Value;
+    float float32Value;
+    double doubleValue;
 };
 
 class LiAutoIncClient {
