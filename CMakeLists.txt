@@ -13,8 +13,8 @@
 # limitations under the License.
 
 cmake_minimum_required (VERSION 3.22)
-set(CMAKE_CXX_STANDARD 17)              # Compile as C++17.
-set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Require C++17 support.
+set(CMAKE_CXX_STANDARD 11)              # Compile as C++11.
+set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Require C++11 support.
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g") # Enable optimization level 3
 

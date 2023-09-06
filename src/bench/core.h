@@ -36,16 +36,10 @@ struct InsertEntry {
     std::unordered_map<TableName, std::unordered_map<FieldName, FieldVal>> tables;
 
     InsertEntry():ts(-1) {
-        for(auto&[_, fields] : tables) {
-            fields.clear();
-        }
         tables.clear();
     }
 
     InsertEntry(Timestamp ts_):ts(ts_) {
-        for(auto&[_, fields] : tables) {
-            fields.clear();
-        }
         tables.clear();
     }
 

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdexcept>
 #include <nlohmann/json.hpp>
 
@@ -207,6 +208,9 @@ ColumnDataType enumToDataType(SignalTypeEnum type) {
         case SignalTypeEnum::doubleType: {
             return ColumnDataType::FLOAT64;
         }
+        case SignalTypeEnum::binType: {
+            return ColumnDataType::STRING;
+        }
         default:
             break;
     }
@@ -232,9 +236,12 @@ LiAutoIncClient::~LiAutoIncClient() {}
  */
 void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
                         std::map<int,std::shared_ptr<std::vector<long>>> &timeStampVec,
-                        std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<std::vector<SignalValue>>>>>>> &valuesMap) {
-    for (const auto &[canid, n] : canIdSizeMap) {
+                        std::map<int,std::shared_ptr<std::vector<std::shared_ptr<std::vector<SignalValue>>>>> &valuesMap,
+                        std::vector<std::string> &binaryValue) {
+    for (const auto &_ : canIdSizeMap) {
 
+        const auto & canid = _.first;
+        const auto & n = _.second;
         const auto & tsVec = timeStampVec[canid];
         const auto & valuesVec = valuesMap[canid];
         const auto & nameAndSchema = signalNameAndSchemaMap[canid];
@@ -277,32 +284,27 @@ void LiAutoIncClient::commitData(std::map<int, int>  &canIdSizeMap,
             auto values = column.mutable_values();
             for (int i = 0; i < n; ++i) {
                 assert(m == valuesVec->at(i)->size());
-                const std::vector<SignalValue> &fields = *valuesVec->at(i)->at(j);
-                if (fields.size() == 0) {
-                    // null
-                    throw std::logic_error("field is empty");
-                } else if(fields.size() == 1) {
-                    // only fields[0]
-                    addValue(values, fields[0]);
-                } else {
-                    // array [1, 2] -> std::string
-                    column.set_datatype(ColumnDataType::STRING);
-                    addStringValue(values, fields);
+                const SignalValue &field = valuesVec->at(i)->at(j);
+                if (signal_type_enum == SignalTypeEnum::binType) {
+                    uint32_t idx = field.value.uint32Value;
+                    values->add_string_values(binaryValue[idx]);
+                    continue;
                 }
+                addValue(values, field);
             }
             insReq.add_columns()->Swap(&column);
         }
-        pimpl->database.stream_inserter.Write(std::move(insReq));
+        pimpl->database.stream_inserter->Write(std::move(insReq));
     }
 }
 
 void LiAutoIncClient::finish() {
-    pimpl->database.stream_inserter.WriteDone();
-    grpc::Status status = pimpl->database.stream_inserter.Finish();
+    pimpl->database.stream_inserter->WriteDone();
+    grpc::Status status = pimpl->database.stream_inserter->Finish();
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
-        auto response = pimpl->database.stream_inserter.GetResponse();
+        auto response = pimpl->database.stream_inserter->GetResponse();
 
         std::cout << "notice: [";
         std::cout << response.affected_rows().value() << "] ";

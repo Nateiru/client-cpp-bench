@@ -124,7 +124,7 @@ void consumer(const Core& core) {
 
     // client rpc
     greptime::Database database("public", "localhost:4001");
-    auto stream_inserter = database.CreateStreamInserter();
+    // auto stream_inserter = database.CreateStreamInserter();
 
     InsertRequests insert_requests;
     while (true) {
@@ -141,11 +141,13 @@ void consumer(const Core& core) {
                 lk.unlock(); 
                 LineWriter line_writer;
                 auto ts = insert_entry.ts;
-                for (auto &[table_name, fields] : insert_entry.tables) {
+                for (auto &table : insert_entry.tables) {
+                    auto &table_name = table.first;
+                    auto &fields = table.second;
                     line_writer.add_row(table_name, ts, fields);
                 }
                 auto insert_vec = line_writer.build();
-                stream_inserter.WriteBatch(std::move(insert_vec));
+                database.stream_inserter->WriteBatch(std::move(insert_vec));
             }
             else if (is_producer_done) {
                 break;
@@ -154,14 +156,14 @@ void consumer(const Core& core) {
     }
 
     std::cout << "Before WriteDone" << std::endl;
-    stream_inserter.WriteDone();
+    database.stream_inserter->WriteDone();
 
-    grpc::Status status = stream_inserter.Finish();
+    grpc::Status status = database.stream_inserter->Finish();
     std::cout << "Finish" << std::endl;
 
     if (status.ok()) {
         std::cout << "success!" << std::endl;
-        auto response = stream_inserter.GetResponse();
+        auto response = database.stream_inserter->GetResponse();
 
         std::cout << "notice: [";
         std::cout << response.affected_rows().value() << "] ";

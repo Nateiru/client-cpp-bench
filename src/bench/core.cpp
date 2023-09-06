@@ -5,9 +5,12 @@
 
 SignalToCanId CanIdToSignalMap::build_index() {
     SignalToCanId signal_to_can_id_map;
-    for (const auto &[can_id, signal_names] : inner)
+    for (const auto & _ : inner) {
+        const auto &can_id = _.first;
+        const auto &signal_names = _.second;
         for (const auto &signal_name : signal_names) 
             signal_to_can_id_map.emplace(signal_name, can_id);
+    }
     return signal_to_can_id_map;
 }
 
